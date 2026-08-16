@@ -1,18 +1,18 @@
 {
   "name": "discord-verify-bot",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node runner.js",
     "bot": "node index.js",
-    "check": "node --check index.js && node --check runner.js"
+    "check": "node --check index.js && node --check runner.js && node --check bot-watch.js"
   },
   "engines": {
-    "node": ">=24.17.0"
+    "node": ">=24.17.0 <25"
   },
   "dependencies": {
-    "discord.js": "^14.27.0",
-    "dotenv": "^17.2.1"
+    "discord.js": "14.27.0",
+    "dotenv": "17.2.1"
   }
 }
