@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: botddd
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 15
+    envVars:
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: VERIFIED_ROLE_ID
+        sync: false
