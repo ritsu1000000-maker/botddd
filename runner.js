@@ -38,7 +38,11 @@ function now() {
 }
 
 function botIsRunning() {
-  return Boolean(botProcess && botProcess.exitCode === null && !botProcess.killed);
+  return Boolean(
+    botProcess
+    && botProcess.exitCode === null
+    && botProcess.signalCode === null,
+  );
 }
 
 function heartbeatFresh() {
@@ -74,7 +78,11 @@ function resetRuntimeState() {
 function scheduleStart(delay = 0) {
   if (shuttingDown) return;
   clearTimeout(restartTimer);
-  restartTimer = setTimeout(startBot, delay);
+  restartTimer = setTimeout(() => {
+    restartTimer = null;
+    startBot();
+  }, delay);
+  restartTimer.unref?.();
 }
 
 function stopBot(reason = 'restart') {
@@ -154,7 +162,7 @@ function handleChildMessage(message) {
     return;
   }
 
-  if (type === 'process-exception' || type === 'process-rejection') {
+  if (type === 'process-exception' || type === 'process-rejection' || type === 'discord-invalidated') {
     console.error(`[runner] Bot内部例外: ${message.error ?? type}`);
   }
 }
@@ -165,6 +173,7 @@ function startBot() {
   restartInProgress = false;
   restartAttempts += 1;
   lastStartAt = new Date();
+  lastWatchdogReason = null;
   resetRuntimeState();
 
   console.log(`[runner] Discord Botを起動します (attempt ${restartAttempts})`);
@@ -328,6 +337,7 @@ function shutdown(signal) {
   console.log(`[runner] ${signal}を受信しました。終了処理を行います。`);
 
   clearTimeout(restartTimer);
+  restartTimer = null;
   clearBotTimers();
   clearInterval(watchdogTimer);
 
