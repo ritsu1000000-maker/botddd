@@ -5,8 +5,8 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: npm start
-    healthCheckPath: /health
-    maxShutdownDelaySeconds: 15
+    healthCheckPath: /live
+    maxShutdownDelaySeconds: 30
     envVars:
       - key: DISCORD_BOT_TOKEN
         sync: false
