@@ -12,6 +12,17 @@ function send(message) {
   }
 }
 
+function exitForRecovery(type, error) {
+  send({
+    type,
+    error: error instanceof Error ? error.message : String(error),
+    ready: false,
+  });
+
+  // 壊れた状態のプロセスを無理に継続せず、親runnerに再起動させる。
+  setTimeout(() => process.exit(1), 100).unref();
+}
+
 Client.prototype.login = async function supervisedLogin(...args) {
   if (!this.__botWatchInstalled) {
     Object.defineProperty(this, '__botWatchInstalled', {
@@ -51,6 +62,15 @@ Client.prototype.login = async function supervisedLogin(...args) {
       send({ type: 'discord-shard-ready', shardId: id, ready: this.isReady() });
     });
 
+    this.on('shardResume', (id, replayedEvents) => {
+      send({
+        type: 'discord-shard-ready',
+        shardId: id,
+        replayedEvents,
+        ready: this.isReady(),
+      });
+    });
+
     this.on('shardReconnecting', (id) => {
       send({ type: 'discord-reconnecting', shardId: id, ready: false });
     });
@@ -81,6 +101,10 @@ Client.prototype.login = async function supervisedLogin(...args) {
       });
     });
 
+    this.on('invalidated', () => {
+      exitForRecovery('discord-invalidated', 'Discord session invalidated');
+    });
+
     const timer = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     timer.unref();
     heartbeat();
@@ -99,9 +123,5 @@ process.on('uncaughtExceptionMonitor', (error, origin) => {
 });
 
 process.on('unhandledRejection', (reason) => {
-  send({
-    type: 'process-rejection',
-    error: reason instanceof Error ? reason.message : String(reason),
-    ready: false,
-  });
+  exitForRecovery('process-rejection', reason);
 });
